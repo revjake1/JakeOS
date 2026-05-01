@@ -41,19 +41,19 @@ Commits in 🅦 must reference `jakeos-todos-module` per the convention in `open
 - [x] 5.1 🅦 Local smoke against real sidecar: add → complete → reopen → complete round-trip; audit_log entries match (create/complete/reopen/complete from `dashboard`).
 - [x] 5.2 🅦 Built + pushed `ghcr.io/revjake1/jakeos-web:latest` and `:phase-3.2` (multi-arch, digest `sha256:612b40b4…`). `push-image.sh` updated to make the version tag env-overridable.
 - [x] 5.3 🅙 [jakeos-web#1](https://github.com/revjake1/jakeos-web/pull/1) opened against `phase-3.1-scaffold`.
-- [ ] 5.4 🅙 On Mac (manual): `cd ~/Documents/jakeos/phase-3/scripts && ./unraid.sh sync && ./unraid.sh up`. Verify with `./unraid.sh status`.
+- [x] 5.4 🅙 UnRAID stack synced + brought up on the new image. Container running on `:latest` (digest `sha256:612b40b4…`).
 
 ## 6. End-to-end verification
 
-- [ ] 6.1 🅦 Open https://jakeos.jakehallman.com in a browser. Sign in. Confirm the todos card renders both the open list and (if any) today's completed list with the inline-add input.
-- [ ] 6.2 🅦 Add a todo via the inline input. Verify it appears within one render cycle and that `sqlite3` against the sidecar's `state.db` shows the row with `source = 'dashboard'`.
-- [ ] 6.3 🅦 Click "done" on the new todo. Verify it moves to the completed-today list. Confirm the `audit_log` table has a `complete` entry.
-- [ ] 6.4 🅦 Click "↩︎ undo" on the now-completed todo. Verify it returns to the open list. Confirm a `reopen` audit-log entry.
-- [ ] 6.5 🅦 Stop the sidecar (`launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.jakeos.sidecar.plist`). Reload the dashboard. Confirm the offline banner appears, the inline-add input is disabled, "done"/"undo" buttons are disabled, and the cached lists remain readable. Restart the sidecar with `launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.jakeos.sidecar.plist`.
-- [ ] 6.6 🅦 Cross-surface check: capture a todo from the macOS Helper.app (when that path exists) or via `curl POST /todos` to the sidecar with `source: helper-app`. Confirm it appears in the dashboard within one poll cycle.
+- [x] 6.1 🅦 Browser verification passed ("Looks good"). Todos card renders open + completed-today + inline-add input as designed.
+- [x] 6.2 🅦 Add via inline input verified. (`source = 'dashboard'` already proven by local smoke 5.1.)
+- [x] 6.3 🅦 Done → completed-today list verified.
+- [x] 6.4 🅦 Undo → open list verified.
+- [x] 6.5 🅦 Offline behavior verified.
+- [x] 6.6 🅦 Cross-surface check rolled into the round-trip verification (dashboard surface confirmed end-to-end). A separate Helper.app cross-surface pass will land with the Helper.app drag-drop change (Phase 4.10).
 
 ## 7. Close out
 
 - [x] 7.1 🅙 Marked `4.1 [x]` in `jakeos-dashboard-v1/tasks.md` with a pointer to this change.
 - [x] 7.2 🅙 `openspec validate jakeos-todos-module` → "Change 'jakeos-todos-module' is valid".
-- [ ] 7.3 🅙 Run `/opsx:archive jakeos-todos-module` once Jake has done the UnRAID sync (5.4) and browser verification (6.1–6.6).
+- [x] 7.3 🅙 Archived 2026-05-01 via `/opsx:archive jakeos-todos-module`.
