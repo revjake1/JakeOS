@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>JakeOS — staging</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      background: #0f1115;
+      color: #e6e7ea;
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .card {
+      max-width: 36rem;
+      padding: 2.5rem 2rem;
+      border: 1px solid #2a2d33;
+      border-radius: 12px;
+      background: #16181d;
+    }
+    h1 { margin: 0 0 1rem; font-size: 1.5rem; letter-spacing: -0.02em; }
+    p  { margin: 0 0 0.75rem; line-height: 1.55; color: #a4a8b1; }
+    code {
+      font-family: ui-monospace, SF Mono, Menlo, monospace;
+      background: #21242a;
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.95em;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>JakeOS — staging</h1>
+    <p>If you can read this, the deployment chain is working end to end.</p>
+    <p>Cloudflare Tunnel → Caddy → oauth2-proxy → nginx stub. The real Node.js + HTMX dashboard ships in Phase 3.1.</p>
+    <p><code>jakeos-dashboard-v1</code> · <code>Phase 3.2 verified</code></p>
+  </div>
+</body>
+</html>

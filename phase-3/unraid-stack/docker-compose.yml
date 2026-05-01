@@ -1,0 +1,103 @@
+# JakeOS — Phase 3.2 stack on UnRAID
+#
+# Five containers (well, four for now — jakeos-web is a stub until Phase 3.1
+# ships the real Node.js app).  Wired so:
+#
+#   Internet → Cloudflare edge → Cloudflare Tunnel (cloudflared)
+#            → Caddy (HTTP only, internal) → oauth2-proxy → jakeos-web
+#
+# All five share the `jakeos-net` bridge.  Tailscale lives on the UnRAID
+# host (no Tailscale sidecar container) — bridge-networked containers can
+# reach Mac sidecar tailnet IPs through the host's routing table.
+
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: jakeos-cloudflared
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    networks:
+      - jakeos-net
+    depends_on:
+      - caddy
+
+  caddy:
+    image: caddy:2
+    container_name: jakeos-caddy
+    restart: unless-stopped
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks:
+      - jakeos-net
+
+  oauth2-proxy:
+    image: quay.io/oauth2-proxy/oauth2-proxy:latest
+    container_name: jakeos-oauth2-proxy
+    restart: unless-stopped
+    volumes:
+      - ./authenticated-emails.txt:/etc/oauth2-proxy/authenticated-emails.txt:ro
+    environment:
+      # Provider
+      - OAUTH2_PROXY_PROVIDER=google
+      - OAUTH2_PROXY_CLIENT_ID=${OAUTH2_PROXY_CLIENT_ID}
+      - OAUTH2_PROXY_CLIENT_SECRET=${OAUTH2_PROXY_CLIENT_SECRET}
+      - OAUTH2_PROXY_COOKIE_SECRET=${OAUTH2_PROXY_COOKIE_SECRET}
+
+      # Single-allowed-account guard:
+      # email_domains = "*" matches anything; the actual gate is
+      # authenticated_emails_file, which is a one-line file with
+      # jake.hallman@gmail.com.
+      - OAUTH2_PROXY_EMAIL_DOMAINS=*
+      - OAUTH2_PROXY_AUTHENTICATED_EMAILS_FILE=/etc/oauth2-proxy/authenticated-emails.txt
+
+      # Scopes — pulled in at sign-in so we don't need a second
+      # consent flow later for Gmail/Calendar.
+      - OAUTH2_PROXY_SCOPE=openid email profile https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/calendar.readonly
+
+      # URLs
+      - OAUTH2_PROXY_REDIRECT_URL=https://jakeos.jakehallman.com/oauth2/callback
+      - OAUTH2_PROXY_COOKIE_DOMAIN=jakeos.jakehallman.com
+      - OAUTH2_PROXY_WHITELIST_DOMAINS=jakeos.jakehallman.com
+
+      # Listen + upstream
+      - OAUTH2_PROXY_HTTP_ADDRESS=0.0.0.0:4180
+      - OAUTH2_PROXY_UPSTREAMS=http://jakeos-web:3000
+
+      # Behind Caddy + cloudflared, so trust forwarded headers
+      - OAUTH2_PROXY_REVERSE_PROXY=true
+      - OAUTH2_PROXY_COOKIE_SECURE=true
+      - OAUTH2_PROXY_COOKIE_SAMESITE=lax
+
+      # Pass identity + access token down to jakeos-web
+      - OAUTH2_PROXY_PASS_ACCESS_TOKEN=true
+      - OAUTH2_PROXY_SET_AUTHORIZATION_HEADER=true
+      - OAUTH2_PROXY_SET_XAUTHREQUEST=true
+      - OAUTH2_PROXY_PASS_USER_HEADERS=true
+    networks:
+      - jakeos-net
+    depends_on:
+      - jakeos-web
+
+  jakeos-web:
+    # Stub for Phase 3.2 deploy verification.  Replace with the real
+    # Node.js + HTMX app when Phase 3.1 ships.
+    image: nginx:alpine
+    container_name: jakeos-web
+    restart: unless-stopped
+    volumes:
+      - ./stub/index.html:/usr/share/nginx/html/index.html:ro
+      - ./stub/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - jakeos-net
+
+networks:
+  jakeos-net:
+    driver: bridge
+
+volumes:
+  caddy-data:
+  caddy-config:

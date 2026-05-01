@@ -1,0 +1,19 @@
+# Caddy serves HTTP only — TLS is terminated at Cloudflare's edge,
+# Cloudflare Tunnel forwards plaintext HTTP into this container.
+#
+# All requests for jakeos.jakehallman.com flow:
+#
+#   browser → Cloudflare edge (TLS) → cloudflared → caddy:80
+#          → oauth2-proxy:4180 → jakeos-web:3000
+
+:80 {
+    # oauth2-proxy enforces auth and proxies authenticated requests
+    # to jakeos-web internally.  Caddy's only job is to forward.
+    reverse_proxy oauth2-proxy:4180
+
+    # Don't log healthcheck requests if cloudflared sends any
+    log {
+        output stdout
+        format console
+    }
+}

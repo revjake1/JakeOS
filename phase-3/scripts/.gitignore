@@ -1,0 +1,3 @@
+# Local config — never commit (contains SSH host, paths, possibly other
+# environment-specific bits)
+config.sh

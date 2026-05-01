@@ -1,0 +1,6 @@
+# Never commit secrets
+.env
+
+# Caddy persistent state — don't commit; will be re-created on UnRAID
+caddy-data/
+caddy-config/
