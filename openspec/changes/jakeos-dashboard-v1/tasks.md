@@ -66,29 +66,29 @@ The web app lives in a **new repo** (TBD), not in `New_Jakehallman_site`. WordPr
 
 These can't be done by Claude Code. Do them first.
 
-- [ ] 3.0.1  Create the Google OAuth client at `https://console.cloud.google.com/apis/credentials`. App type: web application. Authorized JS origin: `https://jakeos.jakehallman.com`. Authorized redirect URI: `https://jakeos.jakehallman.com/oauth2/callback`. Save client ID + client secret to Keychain or 1Password.
-- [ ] 3.0.2  Enable the Gmail API and Calendar API for that GCP project (APIs & Services → Library → enable each).
-- [ ] 3.0.3  Create the Cloudflare account if needed. Create a new Cloudflare Tunnel; note the tunnel UUID.
-- [ ] 3.0.4  Add `CNAME jakeos.jakehallman.com → <tunnel-uuid>.cfargotunnel.com` in the Lithium DNS panel. Verify resolution with `dig jakeos.jakehallman.com`.
-- [ ] 3.0.5  Confirm Tailscale is up on UnRAID and the Mac is reachable from UnRAID (`tailscale status`, then `curl http://<mac-tailscale-ip>:<sidecar-port>/health` from UnRAID).
+- [x] 3.0.1  Google OAuth client created (web app, origin `https://jakeos.jakehallman.com`, redirect `/oauth2/callback`). Client ID + secret stored.
+- [x] 3.0.2  Gmail API + Calendar API enabled in GCP.
+- [x] 3.0.3  Cloudflare Tunnel `jakeos` created.
+- [x] 3.0.4  Domain moved to Cloudflare nameservers; public hostname `jakeos.jakehallman.com → http://caddy:80` wired in tunnel config.
+- [x] 3.0.5  Tailscale verified on UnRAID; UnRAID Tailscale IP: `100.117.1.101`. (Sidecar reachability from UnRAID containers will be verified for real during Phase 3.1 wiring.)
 
 ### Phase 3.1 — Scaffold the web app
 
-- [ ] 3.1.1  Create new repo for the web app on GitHub (e.g., `revjake1/jakeos-web`). Clone to a working location.
-- [ ] 3.1.2  Scaffold a Node.js project: `package.json`, a small server (Express/Fastify/Hono — pick one in the first commit), HTMX 1.x via CDN or local copy, basic templating (Pug, EJS, or plain string-template — also pick in first commit).
-- [ ] 3.1.3  Implement the dashboard layout: six sections (todos, important emails, calendar, employment, briefings, recent captures) + Cowork input + self-loop queue surface, per `dashboard/spec.md`.
-- [ ] 3.1.4  Per-section HTMX polling with `hx-trigger="every 10s"` (or per-section cadence as appropriate). Each section's endpoint server-renders its fragment.
-- [ ] 3.1.5  Server-side calls to the Mac sidecar over Tailscale per `data-contract/spec.md`. Token-pass for Gmail/Calendar scopes to the sidecar where needed.
-- [ ] 3.1.6  Offline banner: when sidecar is unreachable, render last-known-state read-only with the banner per `dashboard/spec.md`.
+- [x] 3.1.1  Repo `revjake1/jakeos-web` created on GitHub; initial commit pushed 2026-05-01 (branch `phase-3.1-scaffold`). Working copy at `~/Documents/jakeos-web`.
+- [x] 3.1.2  Node.js project scaffolded 2026-05-01: **Hono** (small/fast/typed) + plain template literals (no extra runtime deps) + HTMX 1.9.x via CDN. Source under `src/`: `server.js`, `layout.js`, `sections.js`, `sidecar.js`, `auth.js`, `html.js`.
+- [x] 3.1.3  Dashboard layout implemented: seven cards (todos, important emails, calendar, employment, briefings, recent captures, self-loop queue) + Cowork input anchored at bottom. Each card polls its own fragment endpoint at `/sections/<id>`.
+- [x] 3.1.4  Per-section HTMX polling cadence chosen per data volatility: todos 10s, captures 15s, emails 30s, self-loop 30s, calendar 60s, briefings 60s, employment 5m. Offline banner re-checks every 15s.
+- [x] 3.1.5  Sidecar HTTP client (`src/sidecar.js`) with `SIDECAR_BASE_URL` env var (default `http://100.122.117.106:7843`, the Mac's tailnet IP). Forwards the user's Google access token from `X-Forwarded-Access-Token` (oauth2-proxy) to the sidecar as `X-Google-Access-Token` for endpoints needing Gmail/Calendar scope.
+- [x] 3.1.6  Offline behavior: in-memory cache of every successful GET; on failure each section renders the last cached value with a "stale" tag; the shell renders an offline banner reporting `last sync at <ts>` and write controls disable. Per `dashboard/spec.md` "Graceful degradation".
 
 ### Phase 3.2 — Compose the UnRAID stack
 
-- [ ] 3.2.1  Create `docker-compose.yml` with five services: `cloudflared`, `caddy`, `oauth2-proxy`, `jakeos-web`, `tailscale` (or use UnRAID host-level Tailscale).
-- [ ] 3.2.2  `Caddyfile`: reverse-proxy `jakeos.jakehallman.com` → `oauth2-proxy:4180`. HTTP only inside the docker network (TLS terminates at Cloudflare).
-- [ ] 3.2.3  `oauth2-proxy` config: `provider = google`, `email_addresses = jake.hallman@gmail.com`, scopes `openid email profile https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/calendar.readonly`, upstream `jakeos-web:<port>`, cookie secret in env, OAuth client secret in env.
-- [ ] 3.2.4  `cloudflared` config: route the tunnel UUID to `caddy:80` (or whatever Caddy's listening port is in the docker network).
-- [ ] 3.2.5  Deploy the stack on UnRAID (`docker compose up -d`). Verify each container's health.
-- [ ] 3.2.6  Hit `https://jakeos.jakehallman.com` from the public internet. Confirm the Google sign-in flow appears, then confirm a non-Jake account is rejected, then confirm Jake's account succeeds and the dashboard loads.
+- [x] 3.2.1  `docker-compose.yml` with four services (cloudflared, caddy, oauth2-proxy, jakeos-web stub via nginx:alpine; UnRAID host-level Tailscale used). Stack source at `phase-3/unraid-stack/` in this repo. Deploy/management scripts at `phase-3/scripts/`.
+- [x] 3.2.2  `Caddyfile`: HTTP-only on `:80`, reverse-proxies to `oauth2-proxy:4180`. TLS terminated at Cloudflare's edge.
+- [x] 3.2.3  `oauth2-proxy` config: provider Google, single-allowed-account guard via `authenticated-emails.txt`, full scope list (openid + email + profile + Gmail readonly + Calendar readonly), upstream `http://jakeos-web:3000`, cookie secret 32 bytes ASCII (`openssl rand -hex 16`).
+- [x] 3.2.4  `cloudflared` runs in compose using `TUNNEL_TOKEN`; standalone Community Apps cloudflared removed; tunnel hostname `jakeos.jakehallman.com → caddy:80`.
+- [x] 3.2.5  Stack deployed; all four containers `Up`.
+- [x] 3.2.6  `https://jakeos.jakehallman.com` reachable publicly. Google sign-in flow works. Single-account guard rejects non-Jake accounts. Staging stub renders for Jake. Phase 3.2 verified 2026-05-01.
 
 ---
 

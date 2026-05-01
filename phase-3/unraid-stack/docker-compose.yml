@@ -1,14 +1,16 @@
-# JakeOS — Phase 3.2 stack on UnRAID
+# JakeOS — Phase 3 stack on UnRAID
 #
-# Five containers (well, four for now — jakeos-web is a stub until Phase 3.1
-# ships the real Node.js app).  Wired so:
+# Four containers, wired so:
 #
 #   Internet → Cloudflare edge → Cloudflare Tunnel (cloudflared)
 #            → Caddy (HTTP only, internal) → oauth2-proxy → jakeos-web
 #
-# All five share the `jakeos-net` bridge.  Tailscale lives on the UnRAID
+# All four share the `jakeos-net` bridge.  Tailscale lives on the UnRAID
 # host (no Tailscale sidecar container) — bridge-networked containers can
 # reach Mac sidecar tailnet IPs through the host's routing table.
+#
+# jakeos-web is the real Node.js + HTMX dashboard as of Phase 3.1
+# (github.com/revjake1/jakeos-web → ghcr.io/revjake1/jakeos-web:latest).
 
 services:
   cloudflared:
@@ -83,14 +85,19 @@ services:
       - jakeos-web
 
   jakeos-web:
-    # Stub for Phase 3.2 deploy verification.  Replace with the real
-    # Node.js + HTMX app when Phase 3.1 ships.
-    image: nginx:alpine
+    # Phase 3.1 — real Node.js + HTMX dashboard.
+    # Source: github.com/revjake1/jakeos-web. Talks to the Mac sidecar over
+    # Tailscale; SIDECAR_BASE_URL is the Mac's tailnet IP + sidecar port.
+    image: ghcr.io/revjake1/jakeos-web:latest
     container_name: jakeos-web
     restart: unless-stopped
-    volumes:
-      - ./stub/index.html:/usr/share/nginx/html/index.html:ro
-      - ./stub/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    pull_policy: always
+    environment:
+      - PORT=3000
+      - SIDECAR_BASE_URL=${SIDECAR_BASE_URL:-http://100.122.117.106:7843}
+      - SIDECAR_TIMEOUT_MS=${SIDECAR_TIMEOUT_MS:-4000}
+      - JAKEOS_ALLOWED_EMAIL=${JAKEOS_ALLOWED_EMAIL:-jake.hallman@gmail.com}
+      - NODE_ENV=production
     networks:
       - jakeos-net
 
