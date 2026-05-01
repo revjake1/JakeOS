@@ -1,6 +1,8 @@
 # Phase 3.2 — UnRAID stack starter
 
-This folder is the deployable stack for `jakeos.jakehallman.com`. Drop it onto UnRAID, fill in the `.env`, deploy, verify the public URL works end-to-end. The `jakeos-web` service is currently an `nginx:alpine` stub — Phase 3.1 swaps it for the real Node.js + HTMX app.
+This folder is the deployable stack for `jakeos.jakehallman.com`. Drop it onto UnRAID, fill in the `.env`, deploy, verify the public URL works end-to-end.
+
+As of Phase 3.1 (2026-05-01), `jakeos-web` is the real Node.js + HTMX dashboard from `github.com/revjake1/jakeos-web`, published to `ghcr.io/revjake1/jakeos-web:latest`. `pull_policy: always` is set so `./unraid.sh up` and `./unraid.sh restart` always fetch the newest image.
 
 ## What's in here
 
