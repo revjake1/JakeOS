@@ -1,13 +1,13 @@
 # JakeOS
 
-Spec home for the combined product: **Second Brain Helper** (macOS app) and the **JakeOS dashboard** (jakehallman.com/jakeos).
+Spec home for the combined product: **Second Brain Helper** (macOS app) and the **JakeOS dashboard** (`jakeos.jakehallman.com`, served from UnRAID via Cloudflare Tunnel).
 
 This repo holds specs, change proposals, and architecture decisions. Implementation lives in the two child repos:
 
 | Surface | Repo | Path |
 |---|---|---|
 | macOS app | `Second-brain-helper-app` | `~/Documents/Second-brain-helper-app` |
-| Web dashboard | `New_Jakehallman_site` (jakehallman.com/jakeos route) | `~/Documents/New_Jakehallman_site` |
+| Web dashboard | New repo for `jakeos.jakehallman.com` (host: UnRAID, deploy: docker-compose with Caddy + oauth2-proxy + cloudflared + Node.js HTMX server). The legacy `New_Jakehallman_site` repo at `~/Documents/New_Jakehallman_site` continues to be the WordPress side and is **not** touched by JakeOS — `jakehallman.com` stays at Lithium Hosting. | TBD (UnRAID deploy path, to be created during Phase 3) |
 
 ## How specs flow
 

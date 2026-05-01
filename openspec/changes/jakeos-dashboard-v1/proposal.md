@@ -1,13 +1,13 @@
 # jakeos-dashboard-v1 — Proposal
 
-> Umbrella change. Establishes JakeOS as a real product surface across the macOS Second Brain Helper and the jakehallman.com web property, and locks the cross-cutting design decisions before any module work begins.
+> Umbrella change. Establishes JakeOS as a real product surface across the macOS Second Brain Helper and a new `jakeos.jakehallman.com` subdomain (UnRAID-hosted, separate from the existing `jakehallman.com` WordPress site), and locks the cross-cutting design decisions before any module work begins.
 
 ## Why
 
 Jake has two existing pieces of software that *imply* a system but don't yet form one:
 
 - **Second Brain Helper** — a native macOS app at `~/Documents/Second-brain-helper-app` (Swift + Rust sidecar, `MACOSX_DEPLOYMENT_TARGET = 26.0`) that captures and organizes notes locally.
-- **jakehallman.com** — a live WordPress site at `~/Documents/New_Jakehallman_site`, currently part of the job-search surface.
+- **jakehallman.com** — a live WordPress site at Lithium Hosting (working copy at `~/Documents/New_Jakehallman_site`), currently part of the job-search surface. **Not modified by this change.** JakeOS lives on a separate subdomain.
 
 The notes file at `~/Documents/Obsidian Vault/Second brain/In progress/Second brain dashboard "JakeOS" setup notes.md` (22 bullets, captured 2026-05-01) describes a single coherent product on top of those two pieces: a daily dashboard that shows todos, important emails, calendar, job-application status, and contextual briefings, with an LLM-driven self-improvement loop. The product name is JakeOS.
 
@@ -52,7 +52,7 @@ The dashboard must support, at the spec level:
 ### Out of scope (explicitly)
 
 - **iOS** — there is no iOS app today and none is committed in v1. (Source notes called the helper app "macbook"; the existing repo confirms macOS, deployment target 26.0.)
-- **Public-facing rebrand of `/jakeos`** — the route name is locked to `/jakeos` for v1; rebrand can be a later change.
+- **Different subdomain or rebrand of `jakeos.jakehallman.com`** — the subdomain name is locked for v1; rebrand can be a later change.
 - **Multi-user / shared access** — JakeOS v1 is single-user (Jake only).
 - **Mobile-responsive web UI** — desktop-first; mobile is a follow-up if/when needed.
 - **Native iOS / iPadOS clients** — explicitly deferred.
@@ -61,7 +61,7 @@ The dashboard must support, at the spec level:
 
 These are the foundational calls. design.md will lay out options for each without picking; Jake decides before tasks.md is executed.
 
-1. **Surface architecture** — is JakeOS a WordPress page at `/jakeos`, a standalone web app embedded behind the `/jakeos` route, or a macOS-native dashboard riding the existing Second Brain Helper? (Source-note bullet 20 explicitly asks this.)
+1. **Surface architecture** — is JakeOS a WordPress page on the apex, a standalone web app on a subdomain, or a macOS-native dashboard riding the existing Second Brain Helper? (Source-note bullet 20 explicitly asks this. Resolved at standalone subdomain `jakeos.jakehallman.com` on UnRAID.)
 2. **Shared backend** — do the two surfaces share a backend, and if so, where does it live (helper-app-as-server, WordPress-as-server, third service, or no shared backend at all)?
 3. **Auth model** — how does the dashboard authenticate Jake? WordPress login, separate password, OS-level (Touch ID / Keychain) on the macOS surface, or something else?
 4. **Self-improvement-loop safety boundary** — what's the user-confirmation rule for the loop "reinstalling a newer, better version of itself"? Diff + approve, automatic, sandbox-and-test-first, or something else?
@@ -72,7 +72,7 @@ These are the foundational calls. design.md will lay out options for each withou
 This change spans both child repos:
 
 - `~/Documents/Second-brain-helper-app` (macOS app)
-- `~/Documents/New_Jakehallman_site` (WordPress site, `/jakeos` route)
+- A new repo for the JakeOS web app (host: UnRAID, deploy: docker-compose) — to be created during Phase 3. The existing `~/Documents/New_Jakehallman_site` WordPress repo is **not** affected by this change.
 
 Per the convention in `openspec/project.md`, implementation commits in those repos will reference `jakeos-dashboard-v1`.
 

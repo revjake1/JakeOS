@@ -48,11 +48,11 @@ Any authentication endpoint exposed to the public internet SHALL require TLS. No
 
 The dashboard SHALL authenticate users via Google OAuth 2.0 (Sign in with Google). No password-based sign-in path SHALL be exposed.
 
-#### Scenario: Jake hits `/jakeos` while unauthenticated
+#### Scenario: Jake hits `jakeos.jakehallman.com` while unauthenticated
 
-- **WHEN** an unauthenticated request reaches `/jakeos`
+- **WHEN** an unauthenticated request reaches `https://jakeos.jakehallman.com`
 - **THEN** the request MUST be redirected to Google's OAuth consent flow
-- **AND** the OAuth `client_id` and callback URL MUST be configured for `jakehallman.com`
+- **AND** the OAuth `client_id` and callback URL MUST be configured for `https://jakeos.jakehallman.com/oauth2/callback`
 
 ### Requirement: Single-allowed-account guard
 

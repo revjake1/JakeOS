@@ -15,7 +15,7 @@ Commits in 🅜 and 🅦 must reference `jakeos-dashboard-v1` per the convention
 
 These tasks happen in this repo (🅙). No code yet.
 
-- [x] 0.1  **Q1. Surface architecture = B** (standalone web app reverse-proxied behind `/jakeos`). Locked 2026-05-01.
+- [x] 0.1  **Q1. Surface architecture = B** (standalone web app at `https://jakeos.jakehallman.com`, hosted on UnRAID, exposed via Cloudflare Tunnel — refined during Phase 3 architecture exploration). Locked 2026-05-01.
 - [x] 0.2  **Q2. Shared backend = α** (Rust sidecar as backend; Swift UI repurposed as drag-and-drop capture surface). Locked 2026-05-01.
 - [x] 0.3  **Q3. Auth model = iii** (Google OAuth-to-self; reuses Gmail/Calendar scopes; single-allowed-account guard for `jake.hallman@gmail.com`). Locked 2026-05-01.
 - [x] 0.4  **Q4. Self-loop safety = Ⅰ** (diff-and-approve, Jake as human in the loop, with graceful-skip behavior: queue coalescing, stale re-evaluation, generation pause after 14 days inactivity). Locked 2026-05-01.
@@ -58,31 +58,37 @@ If **Q2 = δ (no shared backend)**: skip Phase 2 entirely; replace with per-surf
 
 ## Phase 3 — Surface implementation
 
-Only relevant tasks run, depending on Q1.
+Q1 = B locked. Subdomain locked at `jakeos.jakehallman.com`. Stack locked per design.md "Phase 3 deployment topology" section: UnRAID host, Cloudflare Tunnel for public reachability, Node.js + HTMX web app, oauth2-proxy in front, Tailscale to the Mac sidecar.
 
-### If Q1 = A (WordPress page) → 🅦
+The web app lives in a **new repo** (TBD), not in `New_Jakehallman_site`. WordPress at Lithium is untouched.
 
-- [ ] 3.A.1  New plugin `wp-content/plugins/jakeos/` registers a custom page template `/jakeos`.
-- [ ] 3.A.2  Page template renders the dashboard frame (todos, email, calendar, employment, briefings, Cowork input) with sections that update via REST polling or SSE.
-- [ ] 3.A.3  REST routes proxy reads/writes to the Phase-2 backend per `auth/spec.md`.
-- [ ] 3.A.4  Caddy route confirmation: `/jakeos` requires the chosen auth (per Q3) before reaching WP.
+### Phase 3.0 — Pre-implementation setup (manual, by Jake)
 
-### If Q1 = B (standalone web app) → 🅦
+These can't be done by Claude Code. Do them first.
 
-- [ ] 3.B.1  Scaffold a new web app at `~/Documents/New_Jakehallman_site/jakeos-app/` (framework chosen during Phase 1.1).
-- [ ] 3.B.2  Implement dashboard layout: todos / email / calendar / employment / briefings / Cowork input.
-- [ ] 3.B.3  Wire to backend per `data-contract/spec.md`; live updates via WebSocket or SSE.
-- [ ] 3.B.4  Add to `docker-compose.yml`; add `Caddyfile` reverse-proxy block for `jakehallman.com/jakeos*` with the chosen auth (per Q3) in front.
-- [ ] 3.B.5  Verify Caddy serves `/jakeos` with auth enforced and that WordPress is unaffected.
+- [ ] 3.0.1  Create the Google OAuth client at `https://console.cloud.google.com/apis/credentials`. App type: web application. Authorized JS origin: `https://jakeos.jakehallman.com`. Authorized redirect URI: `https://jakeos.jakehallman.com/oauth2/callback`. Save client ID + client secret to Keychain or 1Password.
+- [ ] 3.0.2  Enable the Gmail API and Calendar API for that GCP project (APIs & Services → Library → enable each).
+- [ ] 3.0.3  Create the Cloudflare account if needed. Create a new Cloudflare Tunnel; note the tunnel UUID.
+- [ ] 3.0.4  Add `CNAME jakeos.jakehallman.com → <tunnel-uuid>.cfargotunnel.com` in the Lithium DNS panel. Verify resolution with `dig jakeos.jakehallman.com`.
+- [ ] 3.0.5  Confirm Tailscale is up on UnRAID and the Mac is reachable from UnRAID (`tailscale status`, then `curl http://<mac-tailscale-ip>:<sidecar-port>/health` from UnRAID).
 
-### If Q1 = C (native macOS only) → 🅜
+### Phase 3.1 — Scaffold the web app
 
-- [ ] 3.C.1  New SwiftUI scene/window `DashboardScene` in `SecondBrainHelper/`.
-- [ ] 3.C.2  Implement dashboard layout panels.
-- [ ] 3.C.3  Wire to local data + Rust sidecar endpoints per `data-contract/spec.md`.
-- [ ] 3.C.4  Auth = OS account; secrets in Keychain (per Q3 = iv).
+- [ ] 3.1.1  Create new repo for the web app on GitHub (e.g., `revjake1/jakeos-web`). Clone to a working location.
+- [ ] 3.1.2  Scaffold a Node.js project: `package.json`, a small server (Express/Fastify/Hono — pick one in the first commit), HTMX 1.x via CDN or local copy, basic templating (Pug, EJS, or plain string-template — also pick in first commit).
+- [ ] 3.1.3  Implement the dashboard layout: six sections (todos, important emails, calendar, employment, briefings, recent captures) + Cowork input + self-loop queue surface, per `dashboard/spec.md`.
+- [ ] 3.1.4  Per-section HTMX polling with `hx-trigger="every 10s"` (or per-section cadence as appropriate). Each section's endpoint server-renders its fragment.
+- [ ] 3.1.5  Server-side calls to the Mac sidecar over Tailscale per `data-contract/spec.md`. Token-pass for Gmail/Calendar scopes to the sidecar where needed.
+- [ ] 3.1.6  Offline banner: when sidecar is unreachable, render last-known-state read-only with the banner per `dashboard/spec.md`.
 
-### If Q1 = mixed (B + C, etc.) → both 🅜 and 🅦 sub-tasks above, in that order.
+### Phase 3.2 — Compose the UnRAID stack
+
+- [ ] 3.2.1  Create `docker-compose.yml` with five services: `cloudflared`, `caddy`, `oauth2-proxy`, `jakeos-web`, `tailscale` (or use UnRAID host-level Tailscale).
+- [ ] 3.2.2  `Caddyfile`: reverse-proxy `jakeos.jakehallman.com` → `oauth2-proxy:4180`. HTTP only inside the docker network (TLS terminates at Cloudflare).
+- [ ] 3.2.3  `oauth2-proxy` config: `provider = google`, `email_addresses = jake.hallman@gmail.com`, scopes `openid email profile https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/calendar.readonly`, upstream `jakeos-web:<port>`, cookie secret in env, OAuth client secret in env.
+- [ ] 3.2.4  `cloudflared` config: route the tunnel UUID to `caddy:80` (or whatever Caddy's listening port is in the docker network).
+- [ ] 3.2.5  Deploy the stack on UnRAID (`docker compose up -d`). Verify each container's health.
+- [ ] 3.2.6  Hit `https://jakeos.jakehallman.com` from the public internet. Confirm the Google sign-in flow appears, then confirm a non-Jake account is rejected, then confirm Jake's account succeeds and the dashboard loads.
 
 ---
 

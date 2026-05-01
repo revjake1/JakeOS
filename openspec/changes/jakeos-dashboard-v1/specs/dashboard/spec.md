@@ -62,7 +62,7 @@ The dashboard SHALL expose a persistent input field at the bottom of the view th
 
 The following requirements depend on design.md Q1 (surface architecture) and Q3 (auth model). They will be added in this delta during `/opsx:apply`:
 
-- The surface platform requirement (web at `/jakeos`, native macOS, or both)
+- ~~The surface platform requirement (web at `/jakeos`, native macOS, or both)~~ → Resolved: standalone web app at `https://jakeos.jakehallman.com`.
 - The deploy/update mechanism
 - The auth surface contract (this spec will reference `auth/spec.md`)
 - The latency budget for "auto-update on new signal" (depends on backend choice from Q2)

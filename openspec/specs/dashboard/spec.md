@@ -2,12 +2,12 @@
 
 ## Purpose
 
-Defines the JakeOS dashboard — the standalone web surface at `jakehallman.com/jakeos` that Jake keeps open as a daily tab. The dashboard renders todos, important emails, calendar (today + condensed upcoming), employment-application status, contextual briefings, recent captures, and the self-improvement-loop review queue, plus a persistent Cowork input field for ad-hoc capture and questions. It is single-user, authenticated via Google OAuth per [auth](../auth/spec.md), and reads/writes through the Rust sidecar API per [data-contract](../data-contract/spec.md). When the sidecar is unreachable, the dashboard degrades to a read-only last-known-state view with a clear offline banner.
+Defines the JakeOS dashboard — the standalone web surface at `https://jakeos.jakehallman.com` that Jake keeps open as a daily tab. The dashboard renders todos, important emails, calendar (today + condensed upcoming), employment-application status, contextual briefings, recent captures, and the self-improvement-loop review queue, plus a persistent Cowork input field for ad-hoc capture and questions. It is single-user, authenticated via Google OAuth per [auth](../auth/spec.md), and reads/writes through the Rust sidecar API per [data-contract](../data-contract/spec.md). When the sidecar is unreachable, the dashboard degrades to a read-only last-known-state view with a clear offline banner.
 
 **Status:** Active.
 **Introduced by:** `jakeos-dashboard-v1` (2026-05-01).
 **Owner:** Jake Hallman.
-**Surface:** Standalone web app reverse-proxied behind `/jakeos` on `jakehallman.com`.
+**Surface:** Standalone web app at `https://jakeos.jakehallman.com` (subdomain hosted on UnRAID, exposed publicly via Cloudflare Tunnel).
 
 ## Requirements
 

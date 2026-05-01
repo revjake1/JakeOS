@@ -20,7 +20,7 @@ A custom page template inside the existing `jakehallman` child theme renders the
 
 ### Option B — Standalone web app reverse-proxied behind `/jakeos`
 
-A separate web app (e.g., SvelteKit, Next.js, or Astro) runs as its own service (already Docker-friendly given the Caddyfile). Caddy reverse-proxies `jakehallman.com/jakeos` to the app. Auth handled by the app (not WordPress).
+A separate web app runs as its own service. Caddy reverse-proxies a subdomain (or `/jakeos` path) to the app. Auth handled by the app (not WordPress). *(Subdomain choice locked during Phase 3 architecture exploration — see "Phase 3 deployment topology" below.)*
 
 - **Pros:** modern reactive UI; clean separation; can stream updates over WebSocket / SSE; easy to put behind its own auth; one deploy unit; "no monolith" maps cleanly to one route per capability.
 - **Cons:** new service to operate; Caddy routing must be tightened (auth on `/jakeos` AND any sub-paths); SEO/cookie/CORS edge cases at the WP boundary; you now have two web apps to maintain.
@@ -46,14 +46,14 @@ The dashboard is a window/scene inside the existing `SecondBrainHelper.app`. No 
 | Plays with the macOS Helper | Loosely | Loosely | Native |
 | Public-facing at `/jakeos` | Yes | Yes | Only as a redirect/landing |
 
-**Decision: B — Standalone web app reverse-proxied behind `/jakeos`.**
+**Decision: B — Standalone web app at `https://jakeos.jakehallman.com`.**
 
 Locked 2026-05-01 after exploring with Jake. Reasoning recorded for traceability:
 
 - "Tab I keep open" is the daily mental model. A reactive web surface fits that natively; a WordPress page (A) doesn't, and a native macOS dashboard (C) is unreachable from phone-in-bed and school-computer contexts that Jake explicitly named as use cases.
 - The web tab is the *consume* surface. The macOS Helper is repurposed as a *capture* surface (drag-and-drop, file→md conversion); see Q2's decision and the new `capture` capability spec.
-- Caddy + Docker setup already in `New_Jakehallman_site` makes B's deploy story cheap.
 - Aligns with the orchestration/no-monolith requirement: routes-per-capability map cleanly to a standalone web app.
+- **Subdomain instead of path** — refined during Phase 3 architecture discussion: `jakehallman.com` is hosted at Lithium Hosting (managed shared hosting), making path-based routing across hosts impractical. Subdomain `jakeos.jakehallman.com` lives entirely on Jake's UnRAID server, leaving the WordPress site untouched at Lithium. See the Phase 3 deployment topology section below for the full topology.
 
 ---
 
@@ -270,6 +270,68 @@ Once Q1 is decided, several others narrow:
 - **Q1 = B (standalone web).** Q2 likely γ. Q3 likely iii (or ii). Q5 could be any.
 - **Q1 = C (native macOS only).** Q2 likely α or δ. Q3 likely iv. Q5 likely ①.
 - **Q1 = mixed (e.g., B + C).** Q2 likely α or γ. Q3 likely iii on web side, iv on Mac side. Q5 likely ①.
+
+---
+
+## Phase 3 deployment topology — locked 2026-05-01
+
+After Phase 2 (sidecar) shipped, a follow-on architecture exploration locked the deployment topology for Phase 3 (the standalone web app). All decisions below are downstream of Q1 = B and Q2 = α and are recorded here so Phase 3 implementation has a clean target.
+
+### Web app host
+
+**UnRAID home server.** The other candidates were Jake's home PC (24/7 but a daily driver, susceptible to reboots) and the MacBook itself (already runs the sidecar; goes offline during commute, which would defeat the dashboard's offline-banner contract). UnRAID is purpose-built for Docker, runs unattended, and has Tailscale already installed so it can reach the Mac sidecar privately.
+
+### Public reachability
+
+**Cloudflare Tunnel** (`cloudflared` running on UnRAID). The other candidates were home-router port forwarding (some ISPs block 80/443; static-IP or DDNS dependency) and Tailscale Funnel (does not support custom domains with proper TLS — its Funnel hostnames are `*.ts.net`-locked). Cloudflare Tunnel exposes UnRAID publicly without port forwarding, terminates TLS at the Cloudflare edge for free, and costs nothing.
+
+**DNS strategy:** option A — only the subdomain moves to Cloudflare. Jake adds a `CNAME jakeos.jakehallman.com → <tunnel-uuid>.cfargotunnel.com` in his current DNS panel (Lithium-managed). The apex `jakehallman.com` and its existing records stay untouched. No nameserver migration required.
+
+### Web framework
+
+**Node.js + HTMX.** The web app server-renders HTML. The browser uses HTMX to swap fragments on demand. Specifically:
+
+- Tiny client payload — no SPA bundle.
+- `hx-trigger="every 10s"` polling for live updates in v1. The sidecar's HTTP API + SQLite reads are sub-millisecond, so polling is cheap.
+- Upgrade path: when polling becomes insufficient, add SSE to the sidecar and proxy through the web app to the browser via HTMX's SSE extension. Not required for v1.
+- Alignment with the "EXTREMELY context-efficient" goal — fewer bytes shipped to the browser than any framework alternative would produce.
+
+The other candidates considered: SvelteKit / Astro (heavier, reactive-SPA shape), Rust + axum (would share types with the sidecar, but slows velocity if Jake isn't actively writing Rust web code), plain HTML + minimal JS (similar to HTMX but more boilerplate). HTMX + Node.js wins on token-efficiency and pace-of-build for a single-user dashboard.
+
+### OAuth integration
+
+**`oauth2-proxy` in front of the web app, configured for Google.** The proxy enforces:
+
+- `provider = google`
+- `email_addresses = jake.hallman@gmail.com` (single-allowed-account guard at the proxy layer)
+- Required scopes: `openid email profile https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/calendar.readonly` (one consent flow, all scopes per the auth spec)
+- Forwards authenticated requests to the web app with `X-Forwarded-User`, `X-Forwarded-Email`, `X-Auth-Request-Access-Token` headers.
+
+The web app trusts those headers and passes Gmail/Calendar tokens through to the sidecar via Tailscale when needed. Web-app code stays simple; OAuth complexity stays in the proxy.
+
+### Container layout (UnRAID `docker-compose.yml`)
+
+Five containers:
+
+```
+cloudflared       — tunnel client; exposes the stack publicly
+caddy             — reverse proxy; terminates HTTP behind cloudflared,
+                    routes to oauth2-proxy
+oauth2-proxy      — Google OAuth gate; forwards authenticated requests
+jakeos-web        — Node.js + HTMX server (the dashboard itself)
+tailscale         — sidecar tailnet membership (or use UnRAID's
+                    host-level Tailscale daemon — both work)
+```
+
+### TLS
+
+**Terminated at Cloudflare's edge.** No ACME setup needed on UnRAID. The internal traffic between Cloudflare and `cloudflared` is encrypted by the tunnel itself; everything inside the docker network is HTTP-over-the-bridge.
+
+### Live updates
+
+**HTMX polling at `every 10s` for v1.** Cheap because the sidecar's reads are SQLite-backed. Per-section `hx-trigger` so each section refreshes independently. SSE is an explicit follow-up if the polling cadence proves limiting.
+
+---
 
 ## What lands in the long-lived spec
 
