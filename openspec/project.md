@@ -4,7 +4,7 @@
 
 JakeOS is the combined product surface of two existing codebases:
 
-- **Second Brain Helper** — a Swift/iOS app that lives at `~/Documents/Second-brain-helper-app`. Native iOS, Xcode project. Built around capturing and organizing thoughts/notes.
+- **Second Brain Helper** — a native macOS app (Swift, Xcode project, `SDKROOT = macosx`, deployment target 26.0) that lives at `~/Documents/Second-brain-helper-app`. Includes a Rust sidecar binary. Built around capturing and organizing thoughts/notes on the desktop.
 - **JakeOS dashboard** — a web dashboard living at `jakehallman.com/jakeos`, implemented in the WordPress repo at `~/Documents/New_Jakehallman_site`.
 
 This umbrella repo (`~/Documents/jakeos`) owns the specs that govern how those two surfaces work and how they interoperate. Code lives in the child repos; specs and design decisions live here.
@@ -20,7 +20,7 @@ Greenfield as of 2026-05-01. No specs written yet. OpenSpec 1.3.1 + Semble insta
 ## Constraints worth knowing
 
 - **Child repo: New_Jakehallman_site** is a live WordPress install behind jakehallman.com. The site is part of Jake's job-search surface, so anything that touches public pages needs to ship cleanly.
-- **Child repo: Second-brain-helper-app** is an Xcode project; build/test runs through Xcode, not from CI yet.
+- **Child repo: Second-brain-helper-app** is a macOS Xcode project with a Rust sidecar; build/test runs through Xcode, not from CI yet.
 - This is a personal product, not a team product. Process should optimize for one person moving fast, not for coordination.
 
 ## Conventions

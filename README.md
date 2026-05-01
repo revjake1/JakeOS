@@ -1,12 +1,12 @@
 # JakeOS
 
-Spec home for the combined product: **Second Brain Helper** (iOS app) and the **JakeOS dashboard** (jakehallman.com/jakeos).
+Spec home for the combined product: **Second Brain Helper** (macOS app) and the **JakeOS dashboard** (jakehallman.com/jakeos).
 
 This repo holds specs, change proposals, and architecture decisions. Implementation lives in the two child repos:
 
 | Surface | Repo | Path |
 |---|---|---|
-| iOS app | `Second-brain-helper-app` | `~/Documents/Second-brain-helper-app` |
+| macOS app | `Second-brain-helper-app` | `~/Documents/Second-brain-helper-app` |
 | Web dashboard | `New_Jakehallman_site` (jakehallman.com/jakeos route) | `~/Documents/New_Jakehallman_site` |
 
 ## How specs flow
