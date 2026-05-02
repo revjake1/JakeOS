@@ -98,9 +98,9 @@ These run in parallel where possible. Each one will be split off into its own fo
 
 For v1 of *this* change, only these tasks are required:
 
-- [ ] 4.1  **Todos** — read/write through `data-contract/spec.md`; check/uncheck round-trips to source of truth; verified end-to-end.
+- [x] 4.1  **Todos** — add/check/uncheck round-trip via `data-contract/spec.md`; verified end-to-end. Implemented in change `jakeos-todos-module` (2026-05-01).
 - [ ] 4.2  **Important email surface** — Gmail OAuth scope wired (uses the same OAuth from Q3 if applicable); show top-N most-recent likely-important; "mark important / not" writes back.
-- [ ] 4.3  **Calendar surface** — Google Calendar OAuth scope wired; show today + condensed upcoming; "add this email as event" prompt path stubbed.
+- [x] 4.3  **Calendar surface** — Google Calendar OAuth scope wired; show today + condensed upcoming; "add this email as event" prompt path stubbed. Implemented in change `jakeos-calendar-module` (2026-05-01). End-to-end verified: real events from Jake's primary Google Calendar render on https://jakeos.jakehallman.com.
 - [ ] 4.4  **Employment section** — read from `~/.claude/skills/job-applier/state/APPLICATION_TRACKER.md`; cross-reference Gmail labels for `Job Apps/*`; render outstanding / needs-followup / rejected (rejected hidden).
 - [ ] 4.5  **Cowork input** — bottom input field that posts to a Cowork session (or queues for one) for new todos / ideas / questions.
 - [ ] 4.6  **Daily staleness sweep** — scheduled task (per Q5 trigger) flags stale facts; ambiguous ones surface to Jake on the dashboard.
