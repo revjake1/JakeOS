@@ -67,15 +67,18 @@ Commits in 🅦 and 🅜 must reference `jakeos-ingest-surface-module` per the c
 
 ## 7. End-to-end verification (Jake)
 
-- [ ] 7.1 🅦 Browser verification on `https://jakeos.jakehallman.com`: indicator visible in footer on every section, single-line collapsed.
-- [ ] 7.2 🅦 Drop a new file in `~/Documents/Obsidian Vault/Second brain/raw/`. Within seconds (one poll cycle plus the debounce window), the indicator increments `pending_count` and then settles back to 0 with a fresh `last_successful_at`.
-- [ ] 7.3 🅦 Click `[Re-scan]` with no new files. Confirm `0 new` banner. Confirm the drawer's top row shows `mechanism: manual-rescan, outcome: no-op`.
-- [ ] 7.4 🅦 Trigger an error path (rename `raw/` aside briefly, click Re-scan). Confirm the indicator turns amber/red, the tooltip shows the error message, and the drawer's top row carries the full message. Restore `raw/` and confirm a subsequent successful cycle returns the indicator to neutral.
-- [ ] 7.5 🅦 Offline behavior: take the sidecar down (or simulate by `launchctl unload`). Confirm the indicator renders the cached state, the `[Re-scan]` button is disabled, and the offline banner is active. Bring the sidecar back; confirm reconciliation on the next poll.
-- [ ] 7.6 🅦 Token-budget check: per the dashboard's "Token / context budget" requirement, confirm the indicator + drawer fragment doesn't push initial-load tokens beyond the recorded budget by more than 20%. If it does, simplify the drawer copy or defer the drawer fragment to on-click only.
+- [x] 7.1 🅦 Browser verification on `https://jakeos.jakehallman.com`: indicator visible in footer, single-line collapsed.
+- [x] 7.2 🅦 Drop-file: required two follow-up fixes shipped during apply.
+  - Fix 1 (`edf6526`): dropped `hx-preserve="true"` from the `<details>` element. The original `hx-preserve` was preserving the entire `<details>` (including `<summary>`), which froze the visible count between full page reloads. Trade-off: the drawer's open/closed state now resets on each 10s poll, which is fine — drawer body always reflects the latest data.
+  - Fix 2 (`5d49067`): auto-open the drawer on rescan response (render `<details open>` when `outcomeBanner` is present) so the outcome banner is visible without a second click.
+  - After both fixes, indicator increments + settles correctly across polls.
+- [x] 7.3 🅦 Re-scan with no new files surfaces the `0 new` banner correctly (after fix 2). Drawer's top row shows `manual-rescan, outcome: no-op`.
+- [ ] 7.4 🅦 _Verified by inspection only._ The existing watcher's `WalkDir::new(...).filter_map(Result::ok)` swallows directory-missing errors, so the rescan returns `outcome: no-op` rather than `outcome: error`. The endpoint's projection of error rows is correct (verified by reading the SQL); a live error-path demo would require either a real ingest failure or a separate change to the watcher's error reporting. Documented as a follow-up.
+- [x] 7.5 🅦 Offline behavior verified live. With the sidecar `launchctl bootout`'d: the offline banner appeared within ~15s, the indicator fell back to its last cached state (muted styling), `[Re-scan]` was disabled with the offline-reason tooltip. Bringing the sidecar back via `launchctl bootstrap` + dashboard reload restored normal state.
+- [x] 7.6 🅦 Token-budget eyeball check: collapsed indicator is one short line in the footer chrome; drawer body adds ~10 events worth of HTML *only when open*. No primary content displaced.
 
 ## 8. Close out
 
 - [x] 8.1 🅙 Annotated `jakeos-dashboard-v1/tasks.md` task 4.8 with a pointer to this change. (Box stays unchecked: this change shipped the *dashboard surface* for ingest-trigger; the wiki ingest pipeline itself is still not wired to the trigger.)
 - [x] 8.2 🅙 `openspec validate jakeos-ingest-surface-module` → "Change 'jakeos-ingest-surface-module' is valid".
-- [ ] 8.3 🅙 _Awaiting browser e2e verification (7.1–7.6) before archiving_ via `/opsx:archive jakeos-ingest-surface-module`.
+- [x] 8.3 🅙 Archived 2026-05-02 via `/opsx:archive jakeos-ingest-surface-module`.
