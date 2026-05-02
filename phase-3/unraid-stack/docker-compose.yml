@@ -79,6 +79,14 @@ services:
       - OAUTH2_PROXY_SET_AUTHORIZATION_HEADER=true
       - OAUTH2_PROXY_SET_XAUTHREQUEST=true
       - OAUTH2_PROXY_PASS_USER_HEADERS=true
+
+      # Refresh the Google access token in the cookie before its 1-hour TTL
+      # expires. Without this, oauth2-proxy keeps forwarding the stale token
+      # and Google returns 401, which the calendar/email surfaces see as
+      # "OAuth not wired" empty states. Requires a refresh token in the
+      # session — Google's web flow returns one when access_type=offline,
+      # which oauth2-proxy sets by default for the google provider.
+      - OAUTH2_PROXY_COOKIE_REFRESH=55m
     networks:
       - jakeos-net
     depends_on:
