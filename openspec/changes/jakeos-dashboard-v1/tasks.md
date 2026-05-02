@@ -48,11 +48,11 @@ If **Q2 = β (WordPress)**: tasks are 🅦.
 If **Q2 = γ (dedicated service)**: tasks are 🅦 (deployed alongside Caddy).
 If **Q2 = δ (no shared backend)**: skip Phase 2 entirely; replace with per-surface storage tasks in Phase 3.
 
-- [ ] 2.1  Stand up the chosen backend (service, schema, API surface) per `data-contract/spec.md`.
-- [ ] 2.2  Implement read endpoints for: todos, ideas, ingest-state, recent-important-emails, upcoming-calendar, employment-tracker.
-- [ ] 2.3  Implement write endpoints for: todo create / complete, idea capture, calendar-add-from-email, email-mark-important / mark-not-important.
-- [ ] 2.4  Add an audit log table/file used by Phase 5's self-loop for write traceability.
-- [ ] 2.5  Health check + liveness endpoint exposed to the chosen surface(s).
+- [x] 2.1  Stand up the chosen backend (service, schema, API surface) per `data-contract/spec.md`. _Shipped: `Second-brain-helper-app/sidecar` daemon scaffold + SQLite store + migration system in commit `5ee83c4`._
+- [x] 2.2  Implement read endpoints for: todos, ideas, ingest-state, recent-important-emails, upcoming-calendar, employment-tracker. _Shipped in commit `abfde82` (read endpoints for todos/ideas/captures/ingest/self-loop/audit + OAuth stubs)._
+- [x] 2.3  Implement write endpoints for: todo create / complete, idea capture, calendar-add-from-email, email-mark-important / mark-not-important. _Shipped in commit `70d58c8` (write endpoints + FSEvents watcher + ingest rescan)._
+- [x] 2.4  Add an audit log table/file used by Phase 5's self-loop for write traceability. _Shipped in commit `5ee83c4`'s initial schema (`audit_log` table) + commit `abfde82` (`audit::record` helper used by every write path)._
+- [x] 2.5  Health check + liveness endpoint exposed to the chosen surface(s). _Shipped in commit `5ee83c4` (`/livez` endpoint in the sidecar's daemon scaffold)._
 
 ---
 
